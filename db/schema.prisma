@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -11,28 +11,76 @@ generator client {
 }
 
 // --------------------------------------
+model Organization {
+  id              Int         @id @default(autoincrement())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now())
+  name            String
+  users           User[]
+}
 
 model User {
-  id             Int       @default(autoincrement()) @id
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  name           String?
-  email          String    @unique
-  hashedPassword String?
-  role           String    @default("user")
-  sessions       Session[]
+  id              Int           @id @default(autoincrement())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now())
+  email           String        @unique
+  hashedPassword  String?
+  name            String?
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  organizationId  Int
+  role            String        @default("user")
+  sessions        Session[]
+  games           Game[]
+  votes           Vote[]
+  totalPoints     Int           @default(0)
+  favoriteSongs   Song[]
+}
+
+model Game {
+  id              Int         @id @default(autoincrement())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now())
+  players         User[]
+  playerLimit     Int?
+  songs           Song[]
+  votes           Vote[]
+  startTime       DateTime
+  endTime         DateTime
+}
+
+model Vote {
+  id              Int         @id @default(autoincrement())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now())
+  user            User        @relation(fields: [userId], references: [id])
+  userId          Int
+  song            Song        @relation(fields: [songId], references: [id])
+  songId          Int
+  game            Game        @relation(fields: [gameId], references: [id])
+  gameId          Int
+}
+
+model Song {
+  id              Int         @id @default(autoincrement())
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @default(now())
+  title           String
+  artist          String
+  length          Int
+  users           User[]
+  votes           Vote[]
+  games           Game[]
 }
 
 model Session {
-  id                 Int       @default(autoincrement()) @id
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  expiresAt          DateTime?
-  handle             String    @unique
-  user               User?     @relation(fields: [userId], references: [id])
-  userId             Int?
-  hashedSessionToken String?
-  antiCSRFToken      String?
-  publicData         String?
-  privateData        String?
+  id                  Int         @id @default(autoincrement())
+  createdAt           DateTime    @default(now())
+  expiresAt           DateTime?
+  handle              String      @unique
+  user                User?       @relation(fields: [userId], references: [id])
+  userId              Int?
+  hashedSessionToken  String?
+  antiCSRFToken       String?
+  publicData          String?
+  privateData         String?
 }
